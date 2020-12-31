@@ -35,7 +35,7 @@ namespace Core.Service
             if (!_IsConnected) return;
             else
             {
-
+                _backfiller.automateBackfill();
             }
         }
 

@@ -8,5 +8,6 @@ namespace Core.Backfiller
 {
     public interface IHistoryBackfiller
     {
+        void automateBackfill();
     }
 }

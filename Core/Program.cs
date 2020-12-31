@@ -50,21 +50,7 @@ namespace Core
             service.Start();
             service.Stop();
 
-            // Ask for User's input start time 
-            //var cultureInfo = new CultureInfo("en-US");
-            //Console.WriteLine("Input start time for backfill: ");
-            //string startTimeString = Console.ReadLine() + " +08";
-            //startTime = DateTime.ParseExact(startTimeString, "dd-MMM-yyyy HH:mm:ss zz", cultureInfo);
-            //AFTime backfillStart = new AFTime(startTime);
 
-            // Ask for User's input end time
-            //Console.WriteLine("Input end time for backfill: ");
-            //string endTimeString = Console.ReadLine() + " +08";
-            //endTime = DateTime.ParseExact(endTimeString, "dd-MMM-yyyy HH:mm:ss zz", cultureInfo);
-            //AFTime backfillEnd = new AFTime(endTime);
-
-            // Construct an AF Time Range
-            //AFTimeRange backfillRange = new AFTimeRange(backfillStart, backfillEnd);
 
             // Get a task handle
             //var daPointListTask = PIPoint.FindPIPointsAsync(myPIServer, csvList);
