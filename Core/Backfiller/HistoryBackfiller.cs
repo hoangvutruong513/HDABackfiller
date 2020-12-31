@@ -1,4 +1,6 @@
 ﻿using Core.ConnectionManager;
+using OSIsoft.AF.Asset;
+using OSIsoft.AF.Data;
 using OSIsoft.AF.PI;
 using OSIsoft.AF.Time;
 using Serilog;
@@ -16,7 +18,9 @@ namespace Core.Backfiller
         private PIServer _SitePI;
         private bool _IsConnected;
         private ILogger _logger;
-        private IList<string> nameList;
+        private IList<string> _nameList = new List<string> {"SIM_Tag1_HDA", "SIM_Tag2_HDA"};
+        private IList<PIPoint> _pipointList;
+        private AFTimeRange _backfillRange;
 
         public HistoryBackfiller(IPIConnectionManager piCM, ILogger logger)
         {
@@ -24,11 +28,21 @@ namespace Core.Backfiller
             _logger = logger;
         }
 
-        public void automateBackfill()
+        public async Task automateBackfill()
         {
-            requestBackfillTimeRange();
+            // Request and show PI Point List
+            _pipointList = await PIPoint.FindPIPointsAsync(_SitePI, _nameList);
 
+            // Request Backfill Time Range
+            _backfillRange = requestBackfillTimeRange();
 
+            // Get Recorded Values for points in the PI Point List
+            var allTasks = new List<Task<AFValues>>();
+            foreach (var point in _pipointList)
+            {
+                allTasks.Add(point.RecordedValuesAsync(_backfillRange, AFBoundaryType.Inside, null, false));
+            }
+            var results = await Task.WhenAll(allTasks);
         }
 
         private AFTimeRange requestBackfillTimeRange()

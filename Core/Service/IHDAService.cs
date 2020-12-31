@@ -8,7 +8,7 @@ namespace Core.Service
 {
     public interface IHDAService
     {
-        void Start();
+        Task Start();
         void Stop();
     }
 }

@@ -26,7 +26,7 @@ namespace Core.Service
             _backfiller = backfiller;
         }
 
-        public void Start()
+        public async Task Start()
         {
             _logger.Information("History Backfill Service started successfully");
             (_IsConnected, _SitePI) = _piCM.Connect();
@@ -35,7 +35,7 @@ namespace Core.Service
             if (!_IsConnected) return;
             else
             {
-                _backfiller.automateBackfill();
+                await _backfiller.automateBackfill();
             }
         }
 

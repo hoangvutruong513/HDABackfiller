@@ -44,10 +44,10 @@ namespace Core
             _container = builder.Build();
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var service = _container.Resolve<IHDAService>();
-            service.Start();
+            await service.Start();
             service.Stop();
 
 
