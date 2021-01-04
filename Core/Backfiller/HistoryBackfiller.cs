@@ -50,18 +50,27 @@ namespace Core.Backfiller
             foreach (var result in results)
             {
                 // Get the name of the DA PIPoint by removing the "_HDA" portion.
-                var lastIndex = result.PIPoint.Name.Length-1;
-                string pointNameDA = result.PIPoint.Name.Remove(lastIndex-3);
-                
+                var lastIndex = result.PIPoint.Name.Length - 1;
+                string pointNameDA = result.PIPoint.Name.Remove(lastIndex - 3);
+
                 var pipointDA = PIPoint.FindPIPoint(_SitePI, pointNameDA);
                 allTasksDA.Add(pipointDA.ReplaceValuesAsync(_backfillRange, result));
             }
             var resultsDA = await Task.WhenAll(allTasksDA);
-
-            // The PiPoint.ReplaceValuesAsync return a Task<AFErrors<AFValue>> which resolve to a null if replacement is successful and resolve to an AFErrors<AFValue> if replacement fail
-            foreach (var result in resultsDA)
+            
+            // Aggregate the List of PIPoint names with the List of Backfill Results
+            var aggregrateResults = _nameList.Zip(resultsDA, (a, b) => new
             {
-                if (result == null) _logger.Information("Historical Backfill successful");
+                name = a,
+                result = b
+            });
+                                                                      
+            // Output the backfill results
+            foreach (var ar in aggregrateResults)
+            {
+                // The PiPoint.ReplaceValuesAsync return a Task<AFErrors<AFValue>> which resolve to a null if replacement is successful and resolve to an AFErrors<AFValue> if replacement fail
+                if (ar.result == null) _logger.Information("Historical Backfill successful for tag {0}", ar.name);
+                else _logger.Error("Historical Backfill failed for tag {0}", ar.name);
             }
         }
 
