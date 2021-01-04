@@ -1,4 +1,5 @@
 ﻿using Core.ConnectionManager;
+using OSIsoft.AF;
 using OSIsoft.AF.Asset;
 using OSIsoft.AF.Data;
 using OSIsoft.AF.PI;
@@ -43,6 +44,25 @@ namespace Core.Backfiller
                 allTasks.Add(point.RecordedValuesAsync(_backfillRange, AFBoundaryType.Inside, null, false));
             }
             var results = await Task.WhenAll(allTasks);
+
+            // Backfill the data from results into the relevant DA PI Points
+            var allTasksDA = new List<Task<AFErrors<AFValue>>>();
+            foreach (var result in results)
+            {
+                // Get the name of the DA PIPoint by removing the "_HDA" portion.
+                var lastIndex = result.PIPoint.Name.Length-1;
+                string pointNameDA = result.PIPoint.Name.Remove(lastIndex-3);
+                
+                var pipointDA = PIPoint.FindPIPoint(_SitePI, pointNameDA);
+                allTasksDA.Add(pipointDA.ReplaceValuesAsync(_backfillRange, result));
+            }
+            var resultsDA = await Task.WhenAll(allTasksDA);
+
+            // The PiPoint.ReplaceValuesAsync return a Task<AFErrors<AFValue>> which resolve to a null if replacement is successful and resolve to an AFErrors<AFValue> if replacement fail
+            foreach (var result in resultsDA)
+            {
+                if (result == null) _logger.Information("Historical Backfill successful");
+            }
         }
 
         private AFTimeRange requestBackfillTimeRange()

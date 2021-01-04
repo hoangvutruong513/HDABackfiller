@@ -49,34 +49,6 @@ namespace Core
             var service = _container.Resolve<IHDAService>();
             await service.Start();
             service.Stop();
-
-
-
-            // Get a task handle
-            //var daPointListTask = PIPoint.FindPIPointsAsync(myPIServer, csvList);
-
-            //while (!daPointListTask.IsCompleted)
-            //{
-            //    Console.Write(".");
-            //}
-
-            //var daPointList = await daPointListTask;
-            //Console.WriteLine();
-
-            //foreach (var point in daPointList)
-            //{
-            //    Console.WriteLine("Name {0}", point.Name);
-            //}
-
-            //PIPoint daPoint = PIPoint.FindPIPoint(myPIServer, "SIM_Tag1_DA");
-            //Console.WriteLine("Recorded Values between {0}", backfillRange);
-            //AFValues recordedValues = daPoint.RecordedValues(backfillRange, AFBoundaryType.Inside, null, true);
-            //foreach(AFValue value in recordedValues)
-            //{
-            //    Console.WriteLine("Timestamp: {0}, Value: {1}", value.Timestamp, value.Value);
-            //}
-
-            //myPIServer.Disconnect();
             Console.ReadLine();
         }
     }
