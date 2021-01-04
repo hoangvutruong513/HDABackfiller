@@ -23,9 +23,6 @@ namespace Core
     class Program
     {
         private static IContainer _container;
-        //private static DateTime startTime, endTime;
-        //private static PIServer myPIServer;
-        //private static List<string> csvList = new List<string>{ "SIM_Tag1_DA", "SIM_Tag2_DA" };
 
         static Program()
         {
