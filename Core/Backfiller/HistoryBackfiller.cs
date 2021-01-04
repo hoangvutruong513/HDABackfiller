@@ -87,7 +87,7 @@ namespace Core.Backfiller
             // Ask for User's input end time
             Console.WriteLine("Input end time for backfill: ");
             string endTimeString = Console.ReadLine() + " +08";
-            _logger.Information("Backfill End Time: {0}", startTimeString);
+            _logger.Information("Backfill End Time: {0}", endTimeString);
             var endTime = DateTime.ParseExact(endTimeString, "dd-MMM-yyyy HH:mm:ss zz", cultureInfo);
             AFTime backfillEnd = new AFTime(endTime);
 
