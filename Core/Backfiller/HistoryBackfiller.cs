@@ -54,7 +54,7 @@ namespace Core.Backfiller
                 string pointNameDA = result.PIPoint.Name.Remove(lastIndex - 3);
 
                 var pipointDA = PIPoint.FindPIPoint(_SitePI, pointNameDA);
-                allTasksDA.Add(pipointDA.ReplaceValuesAsync(_backfillRange, result));
+                allTasksDA.Add(pipointDA.ReplaceValuesAsync(_backfillRange, result, AFBufferOption.Buffer));
             }
             var resultsDA = await Task.WhenAll(allTasksDA);
 
