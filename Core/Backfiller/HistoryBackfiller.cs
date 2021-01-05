@@ -18,7 +18,8 @@ namespace Core.Backfiller
         private PIServer _SitePI;
         private bool _IsConnected;
         private ILogger _logger;
-        private IList<string> _nameList = new List<string> {"SIM_Tag1_HDA", "SIM_Tag2_HDA"};
+        //private IList<string> _nameList = new List<string> {"SIM_Tag1_HDA", "SIM_Tag2_HDA"};
+        private IList<string> _nameList = CsvReader.CsvReader.readCsv();
         private IList<PIPoint> _pipointList;
         private AFTimeRange _backfillRange;
 
