@@ -8,10 +8,10 @@ namespace Core.CsvReader
 {
     class CsvReader
     {
-        private static string csvLocation = AppSettings.PICollectiveName;
+        private static string csvLocation = AppSettings.hdaTagsCSVLocation;
         public static List<string> readCsv()
         {
-            using var streamReader = File.OpenText("hda_tags.csv");
+            using var streamReader = File.OpenText(csvLocation);
             using var csvReader = new CsvHelper.CsvReader(streamReader, CultureInfo.CurrentCulture);
             csvReader.Configuration.HasHeaderRecord = true;
             csvReader.Configuration.ShouldSkipRecord = row => row[0].Contains("HDA_TAGS");
