@@ -4,9 +4,9 @@ using System.Globalization;
 using System.Collections.Generic;
 using Core.Settings;
 
-namespace Core.CsvReader
+namespace Core.FileReader
 {
-    class CsvReader
+    public class CsvReader
     {
         private static string csvLocation = AppSettings.hdaTagsCSVLocation;
         public static List<string> readCsv()

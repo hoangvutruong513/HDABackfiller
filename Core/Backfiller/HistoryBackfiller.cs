@@ -1,4 +1,5 @@
 ﻿using Core.ConnectionManager;
+using Core.FileReader;
 using OSIsoft.AF;
 using OSIsoft.AF.Asset;
 using OSIsoft.AF.Data;
@@ -18,8 +19,6 @@ namespace Core.Backfiller
         private PIServer _SitePI;
         private bool _IsConnected;
         private ILogger _logger;
-        //private IList<string> _nameList = new List<string> {"SIM_Tag1_HDA", "SIM_Tag2_HDA"};
-        private IList<string> _nameList = CsvReader.CsvReader.readCsv();
         private IList<PIPoint> _pipointList;
         private AFTimeRange _backfillRange;
 
@@ -31,7 +30,8 @@ namespace Core.Backfiller
 
         public async Task automateBackfill()
         {
-            // Request and show PI Point List
+            // Retrieve list of HDA PI Points from CSV and find those PI Points on the PI Data Server
+            IList<string> _nameList = CsvReader.readCsv();
             _pipointList = await PIPoint.FindPIPointsAsync(_SitePI, _nameList);
 
             // Request Backfill Time Range
@@ -57,14 +57,14 @@ namespace Core.Backfiller
                 allTasksDA.Add(pipointDA.ReplaceValuesAsync(_backfillRange, result));
             }
             var resultsDA = await Task.WhenAll(allTasksDA);
-            
+
             // Aggregate the List of PIPoint names with the List of Backfill Results
             var aggregrateResults = _nameList.Zip(resultsDA, (a, b) => new
             {
                 name = a,
                 result = b
             });
-                                                                      
+
             // Output the backfill results
             foreach (var ar in aggregrateResults)
             {
