@@ -95,5 +95,13 @@ namespace Core.Backfiller
             AFTimeRange backfillRange = new AFTimeRange(backfillStart, backfillEnd);
             return backfillRange;
         }
+
+        private async Task RetrieveAndBackfillAsync()
+        {
+            foreach (var point in _pipointList)
+            {
+
+            }
+        }
     }
 }
