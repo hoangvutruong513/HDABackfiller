@@ -1,7 +1,5 @@
 ﻿using Core.ConnectionManager;
 using Core.FileReader;
-using OSIsoft.AF;
-using OSIsoft.AF.Asset;
 using OSIsoft.AF.Data;
 using OSIsoft.AF.PI;
 using OSIsoft.AF.Time;
@@ -9,7 +7,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Core.Backfiller
@@ -35,46 +32,21 @@ namespace Core.Backfiller
             _pipointList = await PIPoint.FindPIPointsAsync(_SitePI, _nameList);
 
             // Request Backfill Time Range
-            _backfillRange = requestBackfillTimeRange();
+            _backfillRange = _RequestBackfillTimeRange();
 
-            // Get Recorded Values for points in the PI Point List
-            var allTasks = new List<Task<AFValues>>();
+            // Create list of tasks for multi-threading the workload through the list of PI Points
+            var tasks = new List<Task>();
             foreach (var point in _pipointList)
             {
-                allTasks.Add(point.RecordedValuesAsync(_backfillRange, AFBoundaryType.Inside, null, false));
+                tasks.Add(_RetrieveAndBackfillAsync(point));
             }
-            var results = await Task.WhenAll(allTasks);
 
-            // Backfill the data from results into the relevant DA PI Points
-            var allTasksDA = new List<Task<AFErrors<AFValue>>>();
-            foreach (var result in results)
-            {
-                // Get the name of the DA PIPoint by removing the "_HDA" portion.
-                var lastIndex = result.PIPoint.Name.Length - 1;
-                string pointNameDA = result.PIPoint.Name.Remove(lastIndex - 3);
+            await Task.WhenAll(tasks);
 
-                var pipointDA = PIPoint.FindPIPoint(_SitePI, pointNameDA);
-                allTasksDA.Add(pipointDA.ReplaceValuesAsync(_backfillRange, result, AFBufferOption.Buffer));
-            }
-            var resultsDA = await Task.WhenAll(allTasksDA);
-
-            // Aggregate the List of PIPoint names with the List of Backfill Results
-            var aggregrateResults = _nameList.Zip(resultsDA, (a, b) => new
-            {
-                name = a,
-                result = b
-            });
-
-            // Output the backfill results
-            foreach (var ar in aggregrateResults)
-            {
-                // The PiPoint.ReplaceValuesAsync return a Task<AFErrors<AFValue>> which resolve to a null if replacement is successful and resolve to an AFErrors<AFValue> if replacement fail
-                if (ar.result == null) _logger.Information("Historical Backfill successful for tag {0}", ar.name);
-                else _logger.Error("Historical Backfill failed for tag {0}", ar.name);
-            }
+            return;
         }
 
-        private AFTimeRange requestBackfillTimeRange()
+        private AFTimeRange _RequestBackfillTimeRange()
         {
             // Ask for User's input start time 
             var cultureInfo = new CultureInfo("en-US");
@@ -96,12 +68,29 @@ namespace Core.Backfiller
             return backfillRange;
         }
 
-        private async Task RetrieveAndBackfillAsync()
+        private async Task _RetrieveAndBackfillAsync(PIPoint HDAPIPoint)
         {
-            foreach (var point in _pipointList)
-            {
+            // Retrieve Recorded Values within backfill time range
+            var retrieveDataTask = HDAPIPoint.RecordedValuesAsync(_backfillRange, AFBoundaryType.Inside, null, false);
 
-            }
+            // Find corresponding DA PI Point
+            string DAPIPointName = _GetDAPIPointName(HDAPIPoint.Name);
+            var pipointDA = PIPoint.FindPIPoint(_SitePI, DAPIPointName);
+            
+            // Backfill retrieved data from HDA PI Point into the DA PI Point
+            var backfillResult = await pipointDA.ReplaceValuesAsync(_backfillRange, await retrieveDataTask, AFBufferOption.Buffer);
+
+            // Log Backfill Result for the PI Point
+            _logger.Information("PI Point: {0}; Success: {1}", DAPIPointName, backfillResult == null ? true : false);
+
+            return;
+        }
+
+        private string _GetDAPIPointName(string HDAPIPointName)
+        {
+            // Get the name of the DA PIPoint by removing the "_HDA" portion.
+            var lastIndex = HDAPIPointName.Length - 1;
+            return HDAPIPointName.Remove(lastIndex - 3);
         }
     }
 }
