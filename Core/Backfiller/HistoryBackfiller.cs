@@ -7,6 +7,8 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Core.Backfiller
@@ -18,6 +20,7 @@ namespace Core.Backfiller
         private ILogger _logger;
         private IList<PIPoint> _pipointList;
         private AFTimeRange _backfillRange;
+        private SemaphoreSlim _throttler = new SemaphoreSlim(3, 5);
 
         public HistoryBackfiller(IPIConnectionManager piCM, ILogger logger)
         {
@@ -70,6 +73,8 @@ namespace Core.Backfiller
 
         private async Task _RetrieveAndBackfillAsync(PIPoint HDAPIPoint)
         {
+            await _throttler.WaitAsync();
+
             // Retrieve Recorded Values within backfill time range
             var retrieveDataTask = HDAPIPoint.RecordedValuesAsync(_backfillRange, AFBoundaryType.Inside, null, false);
 
@@ -82,6 +87,8 @@ namespace Core.Backfiller
 
             // Log Backfill Result for the PI Point
             _logger.Information("PI Point: {0}; Success: {1}", DAPIPointName, backfillResult == null ? true : false);
+
+            _throttler.Release();
 
             return;
         }
