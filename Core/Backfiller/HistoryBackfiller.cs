@@ -51,23 +51,20 @@ namespace Core.Backfiller
 
         private AFTimeRange _RequestBackfillTimeRange()
         {
-            // Ask for User's input start time 
-            var cultureInfo = new CultureInfo("en-US");
-            Console.WriteLine("Input start time for backfill: ");
-            string startTimeString = Console.ReadLine() + " +08";
-            _logger.Information("Backfill Start Time: {0}", startTimeString);
-            var startTime = DateTime.ParseExact(startTimeString, "dd-MMM-yyyy HH:mm:ss zz", cultureInfo);
-            AFTime backfillStart = new AFTime(startTime);
+            AFTime backfillStart, backfillEnd;
 
-            // Ask for User's input end time
+            // Ask for User's input start time 
+            
+            Console.WriteLine("PLEASE ONLY INPUT DATE AND TIME IN dd-mmm-yyyy HH:mm:ss (24hr) FORMAT");
+            Console.WriteLine("Input start time for backfill: ");
+            backfillStart = enforceInputFormat();
+
             Console.WriteLine("Input end time for backfill: ");
-            string endTimeString = Console.ReadLine() + " +08";
-            _logger.Information("Backfill End Time: {0}", endTimeString);
-            var endTime = DateTime.ParseExact(endTimeString, "dd-MMM-yyyy HH:mm:ss zz", cultureInfo);
-            AFTime backfillEnd = new AFTime(endTime);
+            backfillEnd = enforceInputFormat();
 
             // Construct an AF Time Range
             AFTimeRange backfillRange = new AFTimeRange(backfillStart, backfillEnd);
+            _logger.Information("Backfill Time Range: {0}", backfillRange);
             return backfillRange;
         }
 
@@ -98,6 +95,30 @@ namespace Core.Backfiller
             // Get the name of the DA PIPoint by removing the "_HDA" portion.
             var lastIndex = HDAPIPointName.Length - 1;
             return HDAPIPointName.Remove(lastIndex - 3);
+        }
+
+        private AFTime enforceInputFormat()
+        {
+            var cultureInfo = new CultureInfo("en-US");
+            string timeString;
+            DateTime timeObj = DateTime.Now;
+
+            bool correctInput = false;
+            while (correctInput == false)
+            {
+                timeString = (Console.ReadLine().Trim() + " +08");
+                try
+                {
+                    timeObj = DateTime.ParseExact(timeString, "dd-MMM-yyyy HH:mm:ss zz", cultureInfo);
+                    _logger.Information("Input accepted: {0}", timeString);
+                    correctInput = true;
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine("Wrong time format. Please enter again:");
+                }
+            }
+            return new AFTime(timeObj);
         }
     }
 }
