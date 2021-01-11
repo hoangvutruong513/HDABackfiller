@@ -18,7 +18,7 @@ namespace Core
             // Configure and Create a logger using Serilog
             var logger = new LoggerConfiguration().MinimumLevel.Debug()
                                                   .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                                                  .WriteTo.File("Logs\\History.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
+                                                  .WriteTo.File("Logs\\History.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: null)
                                                   .CreateLogger();
 
             // Registers instances into container
