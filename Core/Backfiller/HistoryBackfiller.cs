@@ -18,28 +18,28 @@ namespace Core.Backfiller
         private PIServer _SitePI;
         private bool _IsConnected;
         private ILogger _logger;
-        private IList<PIPoint> _pipointList;
         private AFTimeRange _backfillRange;
-        private SemaphoreSlim _throttler = new SemaphoreSlim(3, 5);
+        private SemaphoreSlim _throttler;
 
         public HistoryBackfiller(IPIConnectionManager piCM, ILogger logger)
         {
             (_IsConnected, _SitePI) = piCM.Connect();
             _logger = logger;
+            _throttler = new SemaphoreSlim(3, 5);
         }
 
         public async Task automateBackfill()
         {
             // Retrieve list of HDA PI Points from CSV and find those PI Points on the PI Data Server
             IList<string> _nameList = CsvReader.readCsv();
-            _pipointList = await PIPoint.FindPIPointsAsync(_SitePI, _nameList);
+            var _pipointListTask = PIPoint.FindPIPointsAsync(_SitePI, _nameList);
 
             // Request Backfill Time Range
             _backfillRange = _RequestBackfillTimeRange();
 
             // Create list of tasks for multi-threading the workload through the list of PI Points
             var tasks = new List<Task>();
-            foreach (var point in _pipointList)
+            foreach (var point in await _pipointListTask)
             {
                 tasks.Add(_RetrieveAndBackfillAsync(point));
             }
