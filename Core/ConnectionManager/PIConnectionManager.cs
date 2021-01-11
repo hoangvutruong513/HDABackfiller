@@ -35,7 +35,7 @@ namespace Core.ConnectionManager
                     {
                         _logger.Information("     {0}", identity.Name);
                     }
-                    _logger.Information("AllowWriteValues: {0}", _SitePI.Collective.AllowWriteValues);
+                    // _logger.Information("AllowWriteValues: {0}", _SitePI.Collective.AllowWriteValues);
                 }
                 catch (Exception e)
                 {
