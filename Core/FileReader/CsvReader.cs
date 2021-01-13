@@ -25,9 +25,11 @@ namespace Core.FileReader
             Console.WriteLine("Below is the list of hda tag csv files available... ");
             foreach (KeyValuePair<int, string> kvp in CSVLocationMap)
             {
-                Console.WriteLine("Choice {0}: {1}", kvp.Key, kvp.Value);
+                if (kvp.Value != null)
+                {
+                    Console.WriteLine("Choice {0}: {1}", kvp.Key, kvp.Value);
+                }                
             }
-
             while (!int.TryParse(choice, out choiceInt) || choiceInt < 1 || choiceInt > 6)
             {
                 // keep asking for user input if input is invalid
