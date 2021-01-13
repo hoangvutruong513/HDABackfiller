@@ -31,7 +31,7 @@ namespace Core.Backfiller
         public async Task automateBackfill()
         {
             // Retrieve list of HDA PI Points from CSV and find those PI Points on the PI Data Server
-            IList<string> _nameList = CsvReader.readCsv();
+            IList<string> _nameList = CsvReader.readCsv(_logger);
             var _pipointListTask = PIPoint.FindPIPointsAsync(_SitePI, _nameList);
 
             // Request Backfill Time Range

@@ -3,6 +3,7 @@ using System.IO;
 using System.Globalization;
 using System.Collections.Generic;
 using Core.Settings;
+using Serilog;
 
 namespace Core.FileReader
 {
@@ -18,7 +19,7 @@ namespace Core.FileReader
             {6,  AppSettings.hdaTagsCSVLocation6},
         };
 
-        private static string getUserChoiceCsv()
+        private static string getUserChoiceCsv(ILogger _logger)
         {
             string choice = "";
             int choiceInt;
@@ -38,14 +39,16 @@ namespace Core.FileReader
                 choice = Console.ReadLine();
             }
 
+            _logger.Information("hda tag csv file chosen for backfill is: {0}", CSVLocationMap[choiceInt]);
+
             return CSVLocationMap[choiceInt];          
         }
-        public static List<string> readCsv()
+        public static List<string> readCsv(ILogger _logger)
         {
             List<string> csvData = new List<string>();
             try
             {
-                using var streamReader = File.OpenText(getUserChoiceCsv());
+                using var streamReader = File.OpenText(getUserChoiceCsv(_logger));
                 using var csvReader = new CsvHelper.CsvReader(streamReader, CultureInfo.CurrentCulture);
                 csvReader.Configuration.HasHeaderRecord = true;
                 csvReader.Configuration.ShouldSkipRecord = row => row[0].Contains("HDA_TAGS");
