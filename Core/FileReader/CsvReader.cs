@@ -40,18 +40,37 @@ namespace Core.FileReader
         }
         public static List<string> readCsv()
         {
-            using var streamReader = File.OpenText(getUserChoiceCsv());
-            using var csvReader = new CsvHelper.CsvReader(streamReader, CultureInfo.CurrentCulture);
-            csvReader.Configuration.HasHeaderRecord = true;
-            csvReader.Configuration.ShouldSkipRecord = row => row[0].Contains("HDA_TAGS");
             List<string> csvData = new List<string>();
-
-            while (csvReader.Read())
+            try
             {
-                for (int i = 0; csvReader.TryGetField(i, out string value); i++)
+                using var streamReader = File.OpenText(getUserChoiceCsv());
+                using var csvReader = new CsvHelper.CsvReader(streamReader, CultureInfo.CurrentCulture);
+                csvReader.Configuration.HasHeaderRecord = true;
+                csvReader.Configuration.ShouldSkipRecord = row => row[0].Contains("HDA_TAGS");
+                
+                while (csvReader.Read())
                 {
-                    csvData.Add(value);
+                    for (int i = 0; csvReader.TryGetField(i, out string value); i++)
+                    {
+                        csvData.Add(value);
+                    }
                 }
+                csvReader.Dispose();
+                streamReader.Close();                
+            } 
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine("File does not exist in the program directory...");
+                Console.WriteLine(e.Message);
+            }
+            catch (ArgumentNullException e)
+            {
+                Console.WriteLine("File path not found in App.config");
+                Console.WriteLine(e.Message);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
             }
             return csvData;
         }
