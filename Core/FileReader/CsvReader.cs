@@ -9,6 +9,7 @@ namespace Core.FileReader
 {
     public class CsvReader
     {
+        private ILogger _logger;
         private static Dictionary<int, string> CSVLocationMap = new Dictionary<int, string>()
         {
             {1,  AppSettings.hdaTagsCSVLocation1},
@@ -18,6 +19,11 @@ namespace Core.FileReader
             {5,  AppSettings.hdaTagsCSVLocation5},
             {6,  AppSettings.hdaTagsCSVLocation6},
         };
+        public CsvReader(ILogger logger)
+        {
+            _logger = logger;
+        }
+
 
         private static string getUserChoiceCsv(ILogger _logger)
         {
