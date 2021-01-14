@@ -7,53 +7,52 @@ using Serilog;
 
 namespace Core.FileReader
 {
-    public class CsvReader
+    public class CsvReader : IReader
     {
         private ILogger _logger;
-        private static Dictionary<int, string> CSVLocationMap = new Dictionary<int, string>()
-        {
-            {1,  AppSettings.hdaTagsCSVLocation1},
-            {2,  AppSettings.hdaTagsCSVLocation2},
-            {3,  AppSettings.hdaTagsCSVLocation3},
-            {4,  AppSettings.hdaTagsCSVLocation4},
-            {5,  AppSettings.hdaTagsCSVLocation5},
-            {6,  AppSettings.hdaTagsCSVLocation6},
-        };
+        private string _path = AppSettings.Path;
+        private string[] _fileList;
+
         public CsvReader(ILogger logger)
         {
             _logger = logger;
         }
 
+        // show list of CSV files in the folder defined in AppSettings.Path
         private void showUserChoicesCsv()
         {
+            _logger.Information("Retrieving file from {0}", _path);
+
+            _fileList = Directory.GetFiles(_path,"*.csv");
+
             _logger.Information("List of HDA Tags CSV files available ...");
-            foreach (var item in CSVLocationMap)
+            for (int i = 0; i < _fileList.Length; i++)
             {
-                if (item.Value != null)
-                {
-                    _logger.Information("       Choice {0}: {1}", item.Key, item.Value);
-                }
+                _logger.Information("     Choice {0}: {1}", i+1, _fileList[i]);
             }
         }
 
+        // get the name of the file selected by the user
         private string getUserChoiceCsv()
         {
             string choice = "";
             int choiceInt;
             
-            while (!int.TryParse(choice, out choiceInt) || choiceInt < 1 || choiceInt > 6)
+            while (!int.TryParse(choice, out choiceInt) || choiceInt < 1 || choiceInt > _fileList.Length)
             {
                 // keep asking for user input if input is invalid
                 // for e.g. not an integer, integer not from 1 to 6
-                Console.Write("Please select the csv file to read from (enter a valid number, from 1 to 6): ");
+                Console.Write("Please select the csv file to read from (enter a valid number, from 1 to {0}): ", _fileList.Length);
                 choice = Console.ReadLine();
             }
 
-            _logger.Information("HDA tag CSV file selected for backfill is: {0}", CSVLocationMap[choiceInt]);
+            _logger.Information("HDA tag CSV file selected for backfill is: {0}", _fileList[choiceInt-1]);
 
-            return CSVLocationMap[choiceInt];          
+            return _fileList[choiceInt-1];
         }
-        public List<string> readCsv()
+
+        // Read and export the list of tags from the selected CSV File
+        public IList<string> readFile()
         {
             showUserChoicesCsv();
 

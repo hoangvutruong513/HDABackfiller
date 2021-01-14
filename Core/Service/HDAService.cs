@@ -38,6 +38,8 @@ namespace Core.Service
         {
             _piCM.Disconnect();
             _logger.Information("History Backfill Service completed");
+            _logger.Information("=============================================================================================");
+            _logger.Information("=============================================================================================");
         }
     }
 }
