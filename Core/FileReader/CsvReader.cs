@@ -24,37 +24,43 @@ namespace Core.FileReader
             _logger = logger;
         }
 
+        private void showUserChoicesCsv()
+        {
+            _logger.Information("List of HDA Tags CSV files available ...");
+            foreach (var item in CSVLocationMap)
+            {
+                if (item.Value != null)
+                {
+                    _logger.Information("       Choice {0}: {1}", item.Key, item.Value);
+                }
+            }
+        }
 
-        private static string getUserChoiceCsv(ILogger _logger)
+        private string getUserChoiceCsv()
         {
             string choice = "";
             int choiceInt;
-            Console.WriteLine("Below is the list of hda tag csv files available... ");
-            foreach (KeyValuePair<int, string> kvp in CSVLocationMap)
-            {
-                if (kvp.Value != null)
-                {
-                    Console.WriteLine("Choice {0}: {1}", kvp.Key, kvp.Value);
-                }                
-            }
+            
             while (!int.TryParse(choice, out choiceInt) || choiceInt < 1 || choiceInt > 6)
             {
                 // keep asking for user input if input is invalid
                 // for e.g. not an integer, integer not from 1 to 6
-                Console.Write("Please choose the csv file to read (enter a valid number, from 1 to 6): ");
+                Console.Write("Please select the csv file to read from (enter a valid number, from 1 to 6): ");
                 choice = Console.ReadLine();
             }
 
-            _logger.Information("hda tag csv file chosen for backfill is: {0}", CSVLocationMap[choiceInt]);
+            _logger.Information("HDA tag CSV file selected for backfill is: {0}", CSVLocationMap[choiceInt]);
 
             return CSVLocationMap[choiceInt];          
         }
-        public static List<string> readCsv(ILogger _logger)
+        public List<string> readCsv()
         {
+            showUserChoicesCsv();
+
             List<string> csvData = new List<string>();
             try
             {
-                using var streamReader = File.OpenText(getUserChoiceCsv(_logger));
+                using var streamReader = File.OpenText(getUserChoiceCsv());
                 using var csvReader = new CsvHelper.CsvReader(streamReader, CultureInfo.CurrentCulture);
                 csvReader.Configuration.HasHeaderRecord = true;
                 csvReader.Configuration.ShouldSkipRecord = row => row[0].Contains("HDA_TAGS");
