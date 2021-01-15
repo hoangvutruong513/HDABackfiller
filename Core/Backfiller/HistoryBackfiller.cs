@@ -33,17 +33,16 @@ namespace Core.Backfiller
         public async Task automateBackfill()
         {
             // Retrieve list of HDA PI Points from CSV and find those PI Points on the PI Data Server
-            IList<string> _nameList = _reader.readFile();
-            var _pipointListTask = PIPoint.FindPIPointsAsync(_SitePI, _nameList);
+            IList<string> nameList = _reader.readFile();
 
             // Request Backfill Time Range
             _backfillRange = _RequestBackfillTimeRange();
 
             // Create list of tasks for multi-threading the workload through the list of PI Points
             var tasks = new List<Task>();
-            foreach (var point in await _pipointListTask)
+            foreach (var pointName in nameList)
             {
-                tasks.Add(_RetrieveAndBackfillAsync(point));
+                tasks.Add(_RetrieveAndBackfillAsync(pointName));
             }
 
             await Task.WhenAll(tasks);
@@ -70,19 +69,33 @@ namespace Core.Backfiller
             return backfillRange;
         }
 
-        private async Task _RetrieveAndBackfillAsync(PIPoint HDAPIPoint)
+        private async Task _RetrieveAndBackfillAsync(string pointName)
         {
+            // await for the _throttler to give a worker to the task
             await _throttler.WaitAsync();
+
+            // Try find HDA PI Point, if it cant be found, log error and return
+            PIPoint HDAPIPoint;
+            if (!PIPoint.TryFindPIPoint(_SitePI, pointName, out HDAPIPoint))
+            {
+                _logger.Error("The PI Point {0} is not found on this PI Server", pointName);
+                return;
+            }
+
+            // Try find corresponding DA PI Point
+            string DAPIPointName = _GetDAPIPointName(pointName);
+            PIPoint DAPIPoint;
+            if (!PIPoint.TryFindPIPoint(_SitePI, DAPIPointName, out DAPIPoint))
+            {
+                _logger.Error("The PI Point {0} is not found on this PI Server", DAPIPointName);
+                return;
+            }
 
             // Retrieve Recorded Values within backfill time range
             var retrieveDataTask = HDAPIPoint.RecordedValuesAsync(_backfillRange, AFBoundaryType.Inside, null, false);
 
-            // Find corresponding DA PI Point
-            string DAPIPointName = _GetDAPIPointName(HDAPIPoint.Name);
-            var pipointDA = PIPoint.FindPIPoint(_SitePI, DAPIPointName);
-            
             // Backfill retrieved data from HDA PI Point into the DA PI Point
-            var backfillResult = await pipointDA.ReplaceValuesAsync(_backfillRange, await retrieveDataTask, AFBufferOption.Buffer);
+            var backfillResult = await DAPIPoint.ReplaceValuesAsync(_backfillRange, await retrieveDataTask, AFBufferOption.Buffer);
 
             // Log Backfill Result for the PI Point
             _logger.Information("PI Point: {0}; Success: {1}", DAPIPointName, backfillResult == null ? true : false);
