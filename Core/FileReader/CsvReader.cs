@@ -12,7 +12,7 @@ namespace Core.FileReader
         private ILogger _logger;
         private string _path = AppSettings.Path;
         private string[] _fileList;
-        private IList<string> _csvData;
+        private IList<string> _csvData = new List<string>();
 
         public CsvReader(ILogger logger)
         {
