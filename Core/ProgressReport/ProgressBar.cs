@@ -94,7 +94,8 @@ namespace Core.ProgressReport
 			lock (timer)
 			{
 				disposed = true;
-				UpdateText(string.Empty);
+                Console.WriteLine();
+                // UpdateText(string.Empty);
 			}
 		}
 	}

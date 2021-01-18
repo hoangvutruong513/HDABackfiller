@@ -1,5 +1,6 @@
 ﻿using Core.ConnectionManager;
 using Core.FileReader;
+using Core.ProgressReport;
 using OSIsoft.AF.Data;
 using OSIsoft.AF.PI;
 using OSIsoft.AF.Time;
@@ -21,6 +22,10 @@ namespace Core.Backfiller
         private AFTimeRange _backfillRange;
         private SemaphoreSlim _throttler;
         private IReader _reader;
+        private IList<string> _nameList;
+        private ProgressBar _progressBar;
+        private int _progressCounter = 0;
+        
 
         public HistoryBackfiller(IPIConnectionManager piCM, ILogger logger, IReader reader)
         {
@@ -33,19 +38,21 @@ namespace Core.Backfiller
         public async Task automateBackfill()
         {
             // Retrieve list of HDA PI Points from CSV and find those PI Points on the PI Data Server
-            IList<string> nameList = _reader.readFile();
+            _nameList = _reader.readFile();
 
             // Request Backfill Time Range
             _backfillRange = _RequestBackfillTimeRange();
 
             // Create list of tasks for multi-threading the workload through the list of PI Points
             var tasks = new List<Task>();
-            foreach (var pointName in nameList)
+            _progressBar = new ProgressBar();
+            foreach (var pointName in _nameList)
             {
                 tasks.Add(_RetrieveAndBackfillAsync(pointName));
             }
 
             await Task.WhenAll(tasks);
+            _progressBar.Dispose();
 
             return;
         }
@@ -78,7 +85,10 @@ namespace Core.Backfiller
             PIPoint HDAPIPoint;
             if (!PIPoint.TryFindPIPoint(_SitePI, pointName, out HDAPIPoint))
             {
-                _logger.Error("The PI Point {0} is not found on this PI Server", pointName);
+                //_logger.Error("The PI Point {0} is not found on this PI Server", pointName);
+                _progressBar.Report((double) ++_progressCounter/_nameList.Count);
+                await Task.Delay(5000);
+                _throttler.Release();
                 return;
             }
 
@@ -87,7 +97,10 @@ namespace Core.Backfiller
             PIPoint DAPIPoint;
             if (!PIPoint.TryFindPIPoint(_SitePI, DAPIPointName, out DAPIPoint))
             {
-                _logger.Error("The PI Point {0} is not found on this PI Server", DAPIPointName);
+                //_logger.Error("The PI Point {0} is not found on this PI Server", DAPIPointName);
+                _progressBar.Report((double) ++_progressCounter/_nameList.Count);
+                await Task.Delay(5000);
+                _throttler.Release();
                 return;
             }
 
@@ -98,10 +111,12 @@ namespace Core.Backfiller
             var backfillResult = await DAPIPoint.ReplaceValuesAsync(_backfillRange, await retrieveDataTask, AFBufferOption.Buffer);
 
             // Log Backfill Result for the PI Point
-            _logger.Information("PI Point: {0}; Success: {1}", DAPIPointName, backfillResult == null ? true : false);
+            //_logger.Information("PI Point: {0}; Success: {1}", DAPIPointName, backfillResult == null ? true : false);
 
+            _progressBar.Report((double) ++_progressCounter/_nameList.Count);
+
+            await Task.Delay(5000);
             _throttler.Release();
-
             return;
         }
 
