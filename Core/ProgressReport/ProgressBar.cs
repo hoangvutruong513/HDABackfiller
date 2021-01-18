@@ -2,7 +2,7 @@
 using System.Text;
 using System.Threading;
 
-namespace Core.ProgressBar
+namespace Core.ProgressReport
 {
 	public class ProgressBar : IDisposable, IProgress<double>
 	{
