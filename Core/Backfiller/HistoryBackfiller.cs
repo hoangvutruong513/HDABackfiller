@@ -8,7 +8,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,12 +19,15 @@ namespace Core.Backfiller
         private bool _IsConnected;
         private ILogger _logger;
         private AFTimeRange _backfillRange;
-        private SemaphoreSlim _throttler;
         private IReader _reader;
         private IList<string> _nameList;
+        private int _totalCount;
+        private IList<string> _errorList = new List<string>();
+
+        // private variables for controlling Async Operations
+        private SemaphoreSlim _throttler;
         private ProgressBar _progressBar;
         private int _progressCounter = 0;
-        
 
         public HistoryBackfiller(IPIConnectionManager piCM, ILogger logger, IReader reader)
         {
@@ -39,6 +41,7 @@ namespace Core.Backfiller
         {
             // Retrieve list of HDA PI Points from CSV and find those PI Points on the PI Data Server
             _nameList = _reader.readFile();
+            _totalCount = _nameList.Count;
 
             // Request Backfill Time Range
             _backfillRange = _RequestBackfillTimeRange();
@@ -46,14 +49,16 @@ namespace Core.Backfiller
             // Create list of tasks for multi-threading the workload through the list of PI Points
             var tasks = new List<Task>();
             _progressBar = new ProgressBar();
-            foreach (var pointName in _nameList)
+            foreach (var HDAPIPointName in _nameList)
             {
-                tasks.Add(_RetrieveAndBackfillAsync(pointName));
+                tasks.Add(_RetrieveAndBackfillAsync(HDAPIPointName));
             }
-
             await Task.WhenAll(tasks);
-            _progressBar.Dispose();
 
+            // Wait for progress bar to reach 100% first before disposing
+            await Task.Delay(10000);
+            _progressBar.Dispose();
+            
             return;
         }
 
@@ -62,7 +67,6 @@ namespace Core.Backfiller
             AFTime backfillStart, backfillEnd;
 
             // Ask for User's input start time 
-            
             Console.WriteLine("PLEASE ONLY INPUT DATE AND TIME IN dd-mmm-yyyy HH:mm:ss (24hr) FORMAT");
             Console.WriteLine("Input start time for backfill: ");
             backfillStart = enforceInputFormat();
@@ -76,31 +80,28 @@ namespace Core.Backfiller
             return backfillRange;
         }
 
-        private async Task _RetrieveAndBackfillAsync(string pointName)
+        private async Task _RetrieveAndBackfillAsync(string HDAPIPointName)
         {
-            // await for the _throttler to give a worker to the task
+            // await for the _throttler to give a worker to the task. The worker is released in ReportAndRelease method
             await _throttler.WaitAsync();
+            string message;
 
-            // Try find HDA PI Point, if it cant be found, log error and return
+            // Try find HDA PI Point, if it cant be found, Report Error, Progress and Release throttler.
             PIPoint HDAPIPoint;
-            if (!PIPoint.TryFindPIPoint(_SitePI, pointName, out HDAPIPoint))
+            if (!PIPoint.TryFindPIPoint(_SitePI, HDAPIPointName, out HDAPIPoint))
             {
-                //_logger.Error("The PI Point {0} is not found on this PI Server", pointName);
-                _progressBar.Report((double) ++_progressCounter/_nameList.Count);
-                await Task.Delay(5000);
-                _throttler.Release();
+                message = string.Format("HDA PI Point {0} not found", HDAPIPointName);
+                ReportAndRelease(message);
                 return;
             }
 
-            // Try find corresponding DA PI Point
-            string DAPIPointName = _GetDAPIPointName(pointName);
+            // Try find DA PI Point, if it cant be found, Report Error, Progress and Release throttler.
+            string DAPIPointName = _GetDAPIPointName(HDAPIPointName);
             PIPoint DAPIPoint;
             if (!PIPoint.TryFindPIPoint(_SitePI, DAPIPointName, out DAPIPoint))
             {
-                //_logger.Error("The PI Point {0} is not found on this PI Server", DAPIPointName);
-                _progressBar.Report((double) ++_progressCounter/_nameList.Count);
-                await Task.Delay(5000);
-                _throttler.Release();
+                message = string.Format("DA PI Point {0} not found", DAPIPointName);
+                ReportAndRelease(message);
                 return;
             }
 
@@ -109,14 +110,15 @@ namespace Core.Backfiller
 
             // Backfill retrieved data from HDA PI Point into the DA PI Point
             var backfillResult = await DAPIPoint.ReplaceValuesAsync(_backfillRange, await retrieveDataTask, AFBufferOption.Buffer);
-
-            // Log Backfill Result for the PI Point
-            //_logger.Information("PI Point: {0}; Success: {1}", DAPIPointName, backfillResult == null ? true : false);
-
-            _progressBar.Report((double) ++_progressCounter/_nameList.Count);
-
-            await Task.Delay(5000);
-            _throttler.Release();
+            
+            // if backfillResult != null, backfill failed; else if backfillResult = null, it succeeds
+            if (backfillResult != null)
+            {
+                message = string.Format("Backfill for PI Point {0} failed", DAPIPointName);
+                ReportAndRelease(message);
+                return;
+            }
+            else ReportAndRelease();
             return;
         }
 
@@ -149,6 +151,18 @@ namespace Core.Backfiller
                 }
             }
             return new AFTime(timeObj);
+        }
+
+        private void ReportAndRelease(string message = null)
+        {
+            if(!string.IsNullOrEmpty(message))
+            {
+                _errorList.Add(message);
+            }
+
+            Interlocked.Increment(ref _progressCounter);
+            _progressBar.Report((double)_progressCounter/_totalCount);
+            _throttler.Release();
         }
     }
 }
