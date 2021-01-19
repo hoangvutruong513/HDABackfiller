@@ -125,7 +125,7 @@ namespace Core.Backfiller
             // if backfillResult != null, backfill failed; else if backfillResult = null, it succeeds
             if (backfillResult != null)
             {
-                message = string.Format("Backfill for PI Point {0} failed", DAPIPointName);
+                message = string.Format("Backfill from {0} to {1} failed", HDAPIPointName, DAPIPointName);
                 ReportAndRelease(message);
                 return;
             }
