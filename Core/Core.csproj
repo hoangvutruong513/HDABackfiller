@@ -99,6 +99,7 @@
     <Compile Include="ConnectionManager\IPIConnectionManager.cs" />
     <Compile Include="FileReader\CsvReader.cs" />
     <Compile Include="FileReader\IReader.cs" />
+    <Compile Include="ProgressReport\ProgressBar.cs" />
     <Compile Include="Service\HDAService.cs" />
     <Compile Include="Service\IHDAService.cs" />
     <Compile Include="ConnectionManager\PIConnectionManager.cs" />
