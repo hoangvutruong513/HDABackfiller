@@ -63,6 +63,16 @@ namespace Core.Backfiller
             return;
         }
 
+        public void logErrors()
+        {
+            _logger.Information("SUCCESSFULLY BACKFILLED {0}/{1} of HDA PI POINTS FROM SELECTED CSV", (_totalCount - _errorList.Count), _totalCount);
+            _logger.Information("LIST OF ERRORS ENCOUNTERED DURING BACKFILL");
+            foreach (var error in _errorList)
+            {
+                _logger.Error(error);
+            }
+        }
+
         private AFTimeRange _RequestBackfillTimeRange()
         {
             AFTime backfillStart, backfillEnd;

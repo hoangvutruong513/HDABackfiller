@@ -31,6 +31,7 @@ namespace Core.Service
             else
             {
                 await _backfiller.automateBackfill();
+                _backfiller.logErrors();
             }
         }
 
