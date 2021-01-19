@@ -52,6 +52,7 @@ namespace Core.Backfiller
             foreach (var HDAPIPointName in _nameList)
             {
                 tasks.Add(_RetrieveAndBackfillAsync(HDAPIPointName));
+                //await Task.Delay(2000);
             }
             await Task.WhenAll(tasks);
 
