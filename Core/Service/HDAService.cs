@@ -37,7 +37,7 @@ namespace Core.Service
 
         public void Stop()
         {
-            _piCM.Disconnect();
+            if (_IsConnected) _piCM.Disconnect();
             _logger.Information("History Backfill Service completed");
             _logger.Information("=============================================================================================");
             _logger.Information("=============================================================================================");

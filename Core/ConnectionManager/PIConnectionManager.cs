@@ -7,7 +7,7 @@ namespace Core.ConnectionManager
 {
     public class PIConnectionManager : IPIConnectionManager
     {
-        private PIServer _SitePI;
+        private static PIServer _SitePI;
         private ILogger _logger;
         private string _PICollectiveName = AppSettings.PICollectiveName;
 
@@ -18,13 +18,28 @@ namespace Core.ConnectionManager
 
         public (bool, PIServer) Connect()
         {
+            // if _SitePI not initialized before, try get a handle for _SitePI specified in .config file.
+            if (_SitePI == null)
+            {
+                _SitePI = new PIServers()[_PICollectiveName];
+                if (_SitePI == null)
+                {
+                    _logger.Error("Unable to find the PI Collective {0} specified in configuration file", _PICollectiveName);
+                    return (false, _SitePI);
+                }
+                else
+                {
+                    _logger.Information("Found PI Collective {0} specified in .config file", _PICollectiveName);
+                }
+            }
+            
+            // if _SitePI already initialized, check if it is connected
             if (_SitePI.ConnectionInfo.IsConnected) return (true, _SitePI);
-            else
+            else // else connect
             {
                 try
                 {
                     _logger.Information("Connecting to PI {0}", _PICollectiveName);
-                    _SitePI = new PIServers()[_PICollectiveName];
                     _SitePI.Connect();
 
                     // Connection Info
