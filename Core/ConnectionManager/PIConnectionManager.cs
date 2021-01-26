@@ -28,13 +28,13 @@ namespace Core.ConnectionManager
                     _SitePI.Connect();
 
                     // Connection Info
-                    _logger.Information("Successfully connected to {0}", _PICollectiveName);
                     _logger.Information("Connected to {0} at port {1} as user {2}", _SitePI.ConnectionInfo.Host, _SitePI.ConnectionInfo.Port, _SitePI.CurrentUserName);
                     _logger.Information("PI Identities mapped to above user: ");
                     foreach (var identity in _SitePI.CurrentUserIdentities)
                     {
                         _logger.Information("     {0}", identity.Name);
                     }
+                    _logger.Information("Connection to {0} successfully established", _PICollectiveName);
                     // _logger.Information("AllowWriteValues: {0}", _SitePI.Collective.AllowWriteValues);
                 }
                 catch (Exception e)
