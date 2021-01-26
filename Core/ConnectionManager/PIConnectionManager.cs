@@ -14,7 +14,6 @@ namespace Core.ConnectionManager
         public PIConnectionManager(ILogger logger)
         {
             _logger = logger;
-            _SitePI = new PIServers()[_PICollectiveName];
         }
 
         public (bool, PIServer) Connect()
@@ -25,6 +24,7 @@ namespace Core.ConnectionManager
                 try
                 {
                     _logger.Information("Connecting to PI {0}", _PICollectiveName);
+                    _SitePI = new PIServers()[_PICollectiveName];
                     _SitePI.Connect();
 
                     // Connection Info
