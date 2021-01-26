@@ -46,6 +46,12 @@ namespace Core.Backfiller
             // Retrieve list of HDA PI Points from CSV and find those PI Points on the PI Data Server
             _nameList = _reader.readFile();
             _totalCount = _nameList.Count;
+            // If _nameList is empty, terminate without doing anything
+            if (_totalCount == 0)
+            {
+                _errorList.Add("List of PI Points is empty. Terminating Service");
+                return;
+            }
 
             // Request Backfill Time Range
             _backfillRange = _RequestBackfillTimeRange();
@@ -73,7 +79,7 @@ namespace Core.Backfiller
             _logger.Information("LIST OF ERRORS ENCOUNTERED DURING BACKFILL");
             foreach (var error in _errorList)
             {
-                _logger.Error(error);
+                _logger.Error("     {0}", error);
             }
         }
 
