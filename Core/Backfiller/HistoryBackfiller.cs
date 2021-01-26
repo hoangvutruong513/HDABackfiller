@@ -15,6 +15,7 @@ namespace Core.Backfiller
 {
     public class HistoryBackfiller : IHistoryBackfiller
     {
+        private IPIConnectionManager _piCM;
         private PIServer _SitePI;
         private bool _IsConnected;
         private ILogger _logger;
@@ -31,7 +32,7 @@ namespace Core.Backfiller
 
         public HistoryBackfiller(IPIConnectionManager piCM, ILogger logger, IReader reader)
         {
-            (_IsConnected, _SitePI) = piCM.Connect();
+            _piCM = piCM;
             _logger = logger;
             _reader = reader;
             _throttler = new SemaphoreSlim(3, 5);
@@ -39,6 +40,9 @@ namespace Core.Backfiller
 
         public async Task automateBackfill()
         {
+            // Retrieve connected PIServer from PIConnectionManager
+            (_IsConnected, _SitePI) = _piCM.Connect();
+
             // Retrieve list of HDA PI Points from CSV and find those PI Points on the PI Data Server
             _nameList = _reader.readFile();
             _totalCount = _nameList.Count;
