@@ -26,10 +26,17 @@ namespace Core.FileReader
 
             _fileList = Directory.GetFiles(_path,"*.csv");
 
-            _logger.Information("LIST OF HDA TAGS CSV FILES AVAILABLE ...");
-            for (int i = 0; i < _fileList.Length; i++)
+            if (_fileList.Length > 0)
             {
-                _logger.Information("     Choice {0}: {1}", i+1, _fileList[i]);
+                _logger.Information("LIST OF HDA TAGS CSV FILES AVAILABLE ...");
+                for (int i = 0; i < _fileList.Length; i++)
+                {
+                    _logger.Information("     Choice {0}: {1}", i + 1, _fileList[i]);
+                }
+            }
+            else
+            {
+                _logger.Error("THERE ARE NO CSV FILES IN THIS LOCATION");
             }
         }
 
@@ -57,7 +64,10 @@ namespace Core.FileReader
         {
             try
             {
+                // Retrieve files in folder, if empty, terminate reader and return empty list
                 showUserChoicesCsv();
+                if (_fileList.Length == 0) return _csvData;
+
                 using var streamReader = File.OpenText(getUserChoiceCsv());
                 using var csvReader = new CsvHelper.CsvReader(streamReader, CultureInfo.CurrentCulture);
                 csvReader.Configuration.HasHeaderRecord = true;
