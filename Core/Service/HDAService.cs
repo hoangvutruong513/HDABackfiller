@@ -1,12 +1,7 @@
 ﻿using Core.Backfiller;
 using Core.ConnectionManager;
-using Core.Settings;
 using OSIsoft.AF.PI;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Core.Service
@@ -26,7 +21,7 @@ namespace Core.Service
             _backfiller = backfiller;
         }
 
-        public void Start()
+        public async Task Start()
         {
             _logger.Information("History Backfill Service started successfully");
             (_IsConnected, _SitePI) = _piCM.Connect();
@@ -35,14 +30,17 @@ namespace Core.Service
             if (!_IsConnected) return;
             else
             {
-
+                await _backfiller.automateBackfill();
+                _backfiller.logErrors();
             }
         }
 
         public void Stop()
         {
-            _piCM.Disconnect();
+            if (_IsConnected) _piCM.Disconnect();
             _logger.Information("History Backfill Service completed");
+            _logger.Information("=============================================================================================");
+            _logger.Information("=============================================================================================");
         }
     }
 }

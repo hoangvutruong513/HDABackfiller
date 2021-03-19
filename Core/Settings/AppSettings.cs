@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Configuration;
 
 namespace Core.Settings
 {
     public class AppSettings
     {
         public static string PICollectiveName => StringRetriever("PICollectiveName");
-
+        public static string Path => StringRetriever("CSVLocation");
         private static string StringRetriever(string key)
         {
             return ConfigurationManager.AppSettings[key];
